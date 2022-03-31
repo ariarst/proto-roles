@@ -1,2 +1,2 @@
 # proto-roles
-Here are codes for the analysis of the research
+This repository has been created to gather the required codes, mostly from R, for the analysis of my research on thematic role of Persian CPs.
