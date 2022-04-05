@@ -7,7 +7,7 @@ library(readr)
 library(tidyverse)
 library(broom)
 
-frequency_test <- read_csv("frequency-test.csv")
+frequency_test <- read_csv("frequency_test.csv")
 freq_data <- frequency_test
 
 view(freq_data)

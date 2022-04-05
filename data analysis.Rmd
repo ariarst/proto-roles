@@ -1,0 +1,105 @@
+---
+title: "The analysis of Data"
+author: "Aria Rstegar"
+date: "4/5/2022"
+output: html_document
+---
+
+# Introduction
+In order to have a better perspective on the preparation and the analysis of the data, first the results based on the number of responses were gathered and visualized. Next, by analysing the data based on its variables, a model was prepared.
+
+## The primary overview based on the Frequecy of the responces
+As the legend of the graph indicates, the type of answers for each of the questions is divided into three categories. In this study '1' represents the proto-agent and '2' represents the proto-patient entity. In addition, the data has been divied into two main categories of NV and Nonce, which are successively indicating the type of the non-verbal element, as the former indicates the meaningful and the latter the nonce element.
+
+As the results indicate, there is a higher tendency in selecting the proto-agent choice in most of the instances, which is in harmoney with the experiments of Kako (2016), which argues that, the grammatical roles can significantly, affect the readings of thematic roles.
+
+However, comparing the light verbs in the presence or absence of a meaningful NV element, it can be said that, although some of the LVs tend to occur in sentences with a proto-patient entity in their subject, namely shodan and dashtan, and with a lower effect, dadan, in the absence of the NV element, the judgment of the participants have affected for using either both a proto-agent and a proto-patient option or more proto-agent options.
+
+
+
+```{r loadin required packages, include=FALSE}
+library(tidyverse)
+```
+
+```{r loading the raw data, include=FALSE}
+frequency_test <- read_csv("frequency_test.csv")
+freq_data <- frequency_test
+
+```
+
+```{r cleaning the data, include=FALSE}
+clean_freq <- freq_data %>%
+  select(ResponseId, grep(pattern=".Q\\d", x=colnames(freq_data)))
+
+cleaner_freq <- clean_freq[-c(1, 2), ]
+
+test_freq <- cleaner_freq %>% 
+  pivot_longer(
+    cols = starts_with("N"), 
+    names_to = "questions", 
+    values_to = "Judgment",
+    values_drop_na = TRUE
+  )
+
+
+test1_freq <- test_freq %>%
+  separate(questions, c("NV","LV","question","transitivity"), sep = ("_"))
+
+```
+
+```{r the plot of the results, include=FALSE}
+plot <- ggplot(data = test1_freq, aes(x = LV, y = frequency(Judgment), fill = Judgment)) +
+  geom_bar(position = position_fill(), stat = "identity")+theme_bw() + theme(panel.border = element_blank(), panel.grid.major = element_blank(),
+                                                      panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"))
+
+plot + facet_wrap(~NV)
+
+```
+
+```{r visualization of the data،, fig.width=10}
+plot+ labs(x = 'Light Verbs', y = 'Total Number of Answers') + 
+  facet_wrap(~NV) +   
+  scale_y_continuous(labels = scales::percent_format())
+
+```
+
+
+## The Results of the Generalized Linear Mixed-Effects Model
+
+To have go further with our analysis and have a more comprehensive perspective towards the variables of this study, a model of Generalized Linear Mixed-Effects has been made to show the impact the variables on the judgment on the type of proto-roles.
+```{r data cleaning, include=FALSE}
+rawfile <- read_csv("Proto-roles- test_April 5, 2022_10.47.csv")
+
+my_data <- rawfile
+
+clean <- my_data %>%
+  select(ResponseId, grep(pattern=".Q\\d", x=colnames(my_data)))
+
+cleaner <- clean[-c(1, 2), ]
+
+test <- cleaner %>% 
+  pivot_longer(
+    cols = starts_with("N"), 
+    names_to = "questions", 
+    values_to = "Judgment",
+    values_drop_na = TRUE
+  )
+
+
+test1 <- test %>%
+  separate(questions, c("NV","LV","question","transitivity","protoroles"), sep = ("_"))
+```
+
+The variables which are being taken into consideration are the meaningfulness of the non-verbals, the presence or absence of the direct objects, and the eight types of the light verbs. 
+
+```{r model, message=FALSE, warning=FALSE}
+library(lme4)
+
+mmmodel <- glmer(as.numeric(Judgment) ~ NV * protoroles + transitivity * protoroles + LV * protoroles +
+                   (1|ResponseId) + (1|question), 
+               data = test1, family = binomial)
+
+summary(mmmodel)
+
+```
+

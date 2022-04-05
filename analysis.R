@@ -12,12 +12,12 @@ library(readr)
 library(tidyverse)
 library(broom)
 
-Proto_roles_test_March_26_2022_13_03 <- read_csv("Proto-roles- test_March 31, 2022_20.39.csv")
+rawfile <- read_csv("Proto-roles- test_April 5, 2022_10.47.csv")
 
-my_data <- Proto_roles_test_March_26_2022_13_03
+my_data <- rawfile
 #colnames(my_data) <- sub("\\...*", "", colnames(my_data))
 #view(my_data)
-
+view(my_data)
 
 #skim(my_data)
 
@@ -50,20 +50,40 @@ test1 <- test %>%
   separate(questions, c("NV","LV","question","transitivity","protoroles"), sep = ("_"))
 view(test1)
 
-test1$protoroles <- sub("\\...*", "", test1$protoroles)
-view(test1)
+#test1$protoroles <- sub("\\...*", "", test1$protoroles)
+#view(test1)
 
 write.csv(test1,"\\data.csv")
 
 
-test2 <- unite(test1, Judgments,protoroles:Judgment, sep = "/", remove = TRUE, na.rm = FALSE)
-view(test2)
+#test2 <- unite(test1, Judgments,protoroles:Judgment, sep = "/", remove = TRUE, na.rm = FALSE)
+#view(test2)
 
 
-lvmodel <- glm(as.numeric(Judgment) ~ LV, data = test1, family = 'binomial')
+summary(test1)
 
-tidy(lvmodel)
+# logistic regression
+
+lvmodel <- glm(as.numeric(Judgment) ~ NV * protoroles + LV * protoroles, 
+              data = test1, family = 'binomial')
 
 
-ggplot(data = test2, aes(x = LV, y = Judgments, fill = Judgments)) +
-  geom_bar(stat='identity')
+summary(lvmodel)
+
+
+# mixed effects logistic regression
+
+library(lme4)
+
+mmmodel <- glmer(as.numeric(Judgment) ~ NV * protoroles + transitivity * protoroles + LV * protoroles +
+                   (1|ResponseId) + (1|question), 
+               data = test1, family = binomial)
+
+summary(mmmodel)
+
+library(effects)
+e <- allEffects(mmmodel)
+print(e)
+
+#ggplot(data = mmmodel, aes(x = LV, y = Judgments, fill = Judgments)) +
+ # geom_bar(stat='identity')
